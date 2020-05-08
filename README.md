@@ -1,23 +1,26 @@
-# Accessing Amazon S3 without an SDK
+# Accessing Amazon S3 without CLI or SDK
 
 ### Overview 
 
-This project offers a reference of calling Amazon S3 REST API without using an SDK. 
+This project offers a reference for calling Amazon S3 REST API without using the AWS CLI or SDK. 
 It supports [Signature Version 4](https://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html) 
 for signing AWS requests to S3 API.  Sometimes, a client environment is restricted and 
-is unallowed to install external packages or modules. In such a case, installing AWS CLI 
-or an AWS SDK such as Boto3 is not feasible. Assuming Python runtime is available (which 
-is the case in most Unix-like OS environments), the s3.py program can be modified and 
-executed to invoke various S3 APIs. 
+is unallowed to install any external packages or modules. In such a case, installing AWS CLI 
+or an AWS SDK such as Boto3 for Python is not feasible. Assuming Python runtime is available (which 
+is the case in most Unix-like OS environments), the `s3.py` program from this project can be modified 
+and executed to invoke various S3 APIs. 
 
-### S3 API Invoked
+### Amazon S3 API Invoked
 
-The followin S3 APIs are called from the program: 
+The following S3 APIs are called from the program: 
 - PutObject
 - GetObject
 - ListObjects
 - ListBuckets
 - CreateBucket
+
+More APIs can be added easily to `s3.py` by referencing the REST API syntax 
+[documented here](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html).
 
 ### Installation 
 
