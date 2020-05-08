@@ -1,6 +1,7 @@
 import sys, os, base64, datetime, hashlib, hmac
 import logging
 import urllib, urllib2, urlparse
+import xml.dom.minidom
 
 http_logger = urllib2.HTTPHandler(debuglevel = 1)
 opener = urllib2.build_opener(http_logger) # put your other handlers here too!
@@ -77,6 +78,11 @@ def submit_request(method, url, headers, body=None):
   response = urllib2.urlopen(request)
   return response
 
+def prettyXml(txt):
+  dom = xml.dom.minidom.parseString(txt)
+  xml_pretty_str = dom.toprettyxml()
+  return xml_pretty_str
+
 # -----
 
 access_key = os.environ.get('AWS_ACCESS_KEY_ID')
@@ -87,13 +93,14 @@ if access_key is None or secret_key is None or s3_bucket is None:
     print('One or more required environment variables not set (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET)')
     sys.exit()
 
-host = s3_bucket + '.s3.us-east-1.amazonaws.com'
+s3_endpoint = 's3.us-east-1.amazonaws.com'
+bucket_host = s3_bucket + '.' + s3_endpoint
 object_uri = '/test.txt'
 
 # PutObject API call 
 print('----- PutObject -----')
 data = 'Welcome to amazing S3!'
-(u, h) = build_request(method='PUT', host=host, uri_path=object_uri, body=data, 
+(u, h) = build_request(method='PUT', host=bucket_host, uri_path=object_uri, body=data, 
                       headers={'x-amz-storage-class': 'REDUCED_REDUNDANCY'})
 print('**Request URL = ' + u)
 print('**Request Headers = ' + str(h))
@@ -104,7 +111,7 @@ print('**Response Data: ' + res.read())
 
 # GetObject API call 
 print('----- GetObject -----')
-(u, h) = build_request(method='GET', host=host, uri_path=object_uri)
+(u, h) = build_request(method='GET', host=bucket_host, uri_path=object_uri)
 print('**Request URL = ' + u)
 print('**Request Headers = ' + str(h))
 
@@ -112,12 +119,33 @@ res = submit_request('GET', u, h)
 print('**Response Code: ' + str(res.getcode()))
 print('**Response Data: ' + res.read())
 
-# ListObjects API call 
+# ListObjects (ListBucket) API call 
 print('----- ListObjects -----')
-(u, h) = build_request(method='GET', host=host, uri_path='/', query_string='MaxKeys=10', headers={})
+(u, h) = build_request(method='GET', host=bucket_host, uri_path='/', query_string='MaxKeys=10', headers={})
 print('**Request URL = ' + u)
 print('**Request Headers = ' + str(h))
 
 res = submit_request('GET', u, h)
+print('**Response Code: ' + str(res.getcode()))
+print('**Response Data: ' + prettyXml(res.read()))
+
+# ListBuckets (ListAllMyBuckets) API call 
+print('----- ListBuckets -----')
+(u, h) = build_request(method='GET', host=s3_endpoint, uri_path='/', headers={})
+print('**Request URL = ' + u)
+print('**Request Headers = ' + str(h))
+
+res = submit_request('GET', u, h)
+print('**Response Code: ' + str(res.getcode()))
+print('**Response Data: ' + prettyXml(res.read()))
+
+# CreateBucket API call 
+print('----- CreateBucket -----')
+new_bucket_host = 'bestbucketnameintheworld2020' + '.' + s3_endpoint
+(u, h) = build_request(method='PUT', host=new_bucket_host, uri_path='/', headers={})
+print('**Request URL = ' + u)
+print('**Request Headers = ' + str(h))
+
+res = submit_request('PUT', u, h)
 print('**Response Code: ' + str(res.getcode()))
 print('**Response Data: ' + res.read())
