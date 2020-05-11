@@ -3,15 +3,6 @@ import logging
 import urllib, urllib2, urlparse
 import xml.dom.minidom
 
-http_logger = urllib2.HTTPHandler(debuglevel = 1)
-opener = urllib2.build_opener(http_logger) # put your other handlers here too!
-urllib2.install_opener(opener)
-
-# sets logging level for urllib3 
-#logging.basicConfig(level=logging.DEBUG)
-#import http.client
-#http.client.HTTPConnection.debuglevel = 1
-
 REGION = 'us-east-1'
 SERVICE = 's3'
 SCHEME = 'https'
@@ -94,6 +85,21 @@ if access_key is None or secret_key is None or s3_bucket is None:
     print('One or more required environment variables not set (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET)')
     sys.exit()
 
+# sets logging level for urllib2
+if SCHEME == 'https': 
+  https_logger = urllib2.HTTPSHandler(debuglevel = 1)
+  opener = urllib2.build_opener(https_logger) # put your other handlers here too!
+  urllib2.install_opener(opener)
+else: 
+  http_logger = urllib2.HTTPHandler(debuglevel = 1)
+  opener = urllib2.build_opener(http_logger) # put your other handlers here too!
+  urllib2.install_opener(opener)
+
+# sets logging level for urllib3 
+#logging.basicConfig(level=logging.DEBUG)
+#import http.client
+#http.client.HTTPConnection.debuglevel = 1
+
 s3_host = S3_ENDPOINT
 bucket_host = s3_bucket + '.' + S3_ENDPOINT
 new_bucket_host = s3_bucket + '-newbucket2020' + '.' + S3_ENDPOINT
@@ -104,65 +110,65 @@ print('----- PutObject -----')
 data = 'Amazon S3 is so cool!'
 (u, h) = build_request(method='PUT', host=bucket_host, uri_path=object_uri, body=data, 
                       headers={'x-amz-storage-class': 'REDUCED_REDUNDANCY'})
-print('**Request URL = ' + u)
-print('**Request Headers = ' + str(h))
+print('>> Request URL = ' + u)
+print('>> Request Headers = ' + str(h))
 
 res = submit_request('PUT', u, h, data)
-print('**Response Code: ' + str(res.getcode()))
-print('**Response Data: ' + res.read())
+print('>> Response Code: ' + str(res.getcode()))
+print('>> Response Data: ' + res.read())
 print('----- PutObject -----\n\n')
 
 # GetObject API call 
 print('----- GetObject -----')
 (u, h) = build_request(method='GET', host=bucket_host, uri_path=object_uri)
-print('**Request URL = ' + u)
-print('**Request Headers = ' + str(h))
+print('>> Request URL = ' + u)
+print('>> Request Headers = ' + str(h))
 
 res = submit_request('GET', u, h)
-print('**Response Code: ' + str(res.getcode()))
-print('**Response Data: ' + res.read())
+print('>> Response Code: ' + str(res.getcode()))
+print('>> Response Data: ' + res.read())
 print('----- GetObject -----\n\n')
 
 # ListObjects (ListBucket) API call 
 print('----- ListObjects -----')
 (u, h) = build_request(method='GET', host=bucket_host, uri_path='/', query_string='MaxKeys=10', headers={})
-print('**Request URL = ' + u)
-print('**Request Headers = ' + str(h))
+print('>> Request URL = ' + u)
+print('>> Request Headers = ' + str(h))
 
 res = submit_request('GET', u, h)
-print('**Response Code: ' + str(res.getcode()))
-print('**Response Data: ' + prettyXml(res.read()))
+print('>> Response Code: ' + str(res.getcode()))
+print('>> Response Data: ' + prettyXml(res.read()))
 print('----- ListObjects -----\n\n')
 
 # ListBuckets (ListAllMyBuckets) API call 
 print('----- ListBuckets -----')
 (u, h) = build_request(method='GET', host=s3_host, uri_path='/', headers={})
-print('**Request URL = ' + u)
-print('**Request Headers = ' + str(h))
+print('>> Request URL = ' + u)
+print('>> Request Headers = ' + str(h))
 
 res = submit_request('GET', u, h)
-print('**Response Code: ' + str(res.getcode()))
-print('**Response Data: ' + prettyXml(res.read()))
+print('>> Response Code: ' + str(res.getcode()))
+print('>> Response Data: ' + prettyXml(res.read()))
 print('----- ListBuckets -----\n\n')
 
 # CreateBucket API call 
 print('----- CreateBucket -----')
 (u, h) = build_request(method='PUT', host=new_bucket_host, uri_path='/', headers={})
-print('**Request URL = ' + u)
-print('**Request Headers = ' + str(h))
+print('>> Request URL = ' + u)
+print('>> Request Headers = ' + str(h))
 
 res = submit_request('PUT', u, h)
-print('**Response Code: ' + str(res.getcode()))
-print('**Response Data: ' + res.read())
+print('>> Response Code: ' + str(res.getcode()))
+print('>> Response Data: ' + res.read())
 print('----- CreateBucket -----\n\n')
 
 # DeleteBucket API call 
 print('----- DeleteBucket -----')
 (u, h) = build_request(method='DELETE', host=new_bucket_host, uri_path='/', headers={})
-print('**Request URL = ' + u)
-print('**Request Headers = ' + str(h))
+print('>> Request URL = ' + u)
+print('>> Request Headers = ' + str(h))
 
 res = submit_request('DELETE', u, h)
-print('**Response Code: ' + str(res.getcode()))
-print('**Response Data: ' + res.read())
+print('>> Response Code: ' + str(res.getcode()))
+print('>> Response Data: ' + res.read())
 print('----- DeleteBucket -----\n\n')
