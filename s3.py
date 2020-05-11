@@ -1,7 +1,16 @@
-import sys, os, base64, datetime, hashlib, hmac
+import sys, os, datetime
+import base64, hashlib, hmac
 import logging
-import urllib, urllib2, urlparse
 import xml.dom.minidom
+
+if (sys.version_info > (3, 0)):
+  # Python 3
+  import urllib.request as urllibx
+  import urllib.parse as urlparse
+else:
+  # Python 2
+  import urllib2 as urllibx
+  import urlparse
 
 REGION = 'us-east-1'
 SERVICE = 's3'
@@ -61,13 +70,23 @@ def build_request(method='GET', host='s3.amazonaws.com', uri_path='/', query_str
   return (request_url, headers)
 
 def submit_request(method, url, headers, body=None):
+  print('>> Request URL: [' + method + ' ' + url + ']')
+  print('>> Request Headers: ' + str(headers))
+
   if not body: 
-    request = urllib2.Request(url, headers=headers)
+    request = urllibx.Request(url, headers=headers)
   else: 
-    request = urllib2.Request(url, data=body, headers=headers)
+    body_bytes = body.encode() # required in Python 3, default is utf-8
+    request = urllibx.Request(url, data=body_bytes, headers=headers)
 
   request.get_method = lambda: method 
-  response = urllib2.urlopen(request)
+  response = urllibx.urlopen(request)
+  res_body = response.read().decode()
+  if res_body.startswith('<?xml'):
+    res_body = prettyXml(res_body)
+
+  print('<< Response Code: ' + str(response.getcode()))
+  print('<< Response Data: ' + res_body)
   return response
 
 def prettyXml(txt):
@@ -85,15 +104,15 @@ if access_key is None or secret_key is None or s3_bucket is None:
     print('One or more required environment variables not set (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET)')
     sys.exit()
 
-# sets logging level for urllib2
+# sets logging level for urllib
 if SCHEME == 'https': 
-  https_logger = urllib2.HTTPSHandler(debuglevel = 1)
-  opener = urllib2.build_opener(https_logger) # put your other handlers here too!
-  urllib2.install_opener(opener)
+  https_logger = urllibx.HTTPSHandler(debuglevel = 1)
+  opener = urllibx.build_opener(https_logger) # put your other handlers here too!
+  urllibx.install_opener(opener)
 else: 
-  http_logger = urllib2.HTTPHandler(debuglevel = 1)
-  opener = urllib2.build_opener(http_logger) # put your other handlers here too!
-  urllib2.install_opener(opener)
+  http_logger = urllibx.HTTPHandler(debuglevel = 1)
+  opener = urllibx.build_opener(http_logger) # put your other handlers here too!
+  urllibx.install_opener(opener)
 
 # sets logging level for urllib3 
 #logging.basicConfig(level=logging.DEBUG)
@@ -110,65 +129,35 @@ print('----- PutObject -----')
 data = 'Amazon S3 is so cool!'
 (u, h) = build_request(method='PUT', host=bucket_host, uri_path=object_uri, body=data, 
                       headers={'x-amz-storage-class': 'REDUCED_REDUNDANCY'})
-print('>> Request URL = ' + u)
-print('>> Request Headers = ' + str(h))
-
 res = submit_request('PUT', u, h, data)
-print('>> Response Code: ' + str(res.getcode()))
-print('>> Response Data: ' + res.read())
 print('----- PutObject -----\n\n')
 
 # GetObject API call 
 print('----- GetObject -----')
 (u, h) = build_request(method='GET', host=bucket_host, uri_path=object_uri)
-print('>> Request URL = ' + u)
-print('>> Request Headers = ' + str(h))
-
 res = submit_request('GET', u, h)
-print('>> Response Code: ' + str(res.getcode()))
-print('>> Response Data: ' + res.read())
 print('----- GetObject -----\n\n')
 
 # ListObjects (ListBucket) API call 
 print('----- ListObjects -----')
 (u, h) = build_request(method='GET', host=bucket_host, uri_path='/', query_string='MaxKeys=10', headers={})
-print('>> Request URL = ' + u)
-print('>> Request Headers = ' + str(h))
-
 res = submit_request('GET', u, h)
-print('>> Response Code: ' + str(res.getcode()))
-print('>> Response Data: ' + prettyXml(res.read()))
 print('----- ListObjects -----\n\n')
 
 # ListBuckets (ListAllMyBuckets) API call 
 print('----- ListBuckets -----')
 (u, h) = build_request(method='GET', host=s3_host, uri_path='/', headers={})
-print('>> Request URL = ' + u)
-print('>> Request Headers = ' + str(h))
-
 res = submit_request('GET', u, h)
-print('>> Response Code: ' + str(res.getcode()))
-print('>> Response Data: ' + prettyXml(res.read()))
 print('----- ListBuckets -----\n\n')
 
 # CreateBucket API call 
 print('----- CreateBucket -----')
 (u, h) = build_request(method='PUT', host=new_bucket_host, uri_path='/', headers={})
-print('>> Request URL = ' + u)
-print('>> Request Headers = ' + str(h))
-
 res = submit_request('PUT', u, h)
-print('>> Response Code: ' + str(res.getcode()))
-print('>> Response Data: ' + res.read())
 print('----- CreateBucket -----\n\n')
 
 # DeleteBucket API call 
 print('----- DeleteBucket -----')
 (u, h) = build_request(method='DELETE', host=new_bucket_host, uri_path='/', headers={})
-print('>> Request URL = ' + u)
-print('>> Request Headers = ' + str(h))
-
 res = submit_request('DELETE', u, h)
-print('>> Response Code: ' + str(res.getcode()))
-print('>> Response Data: ' + res.read())
 print('----- DeleteBucket -----\n\n')
