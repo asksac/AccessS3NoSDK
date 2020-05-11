@@ -18,6 +18,7 @@ The following S3 APIs are called from the program:
 - ListObjects
 - ListBuckets
 - CreateBucket
+- DeleteBucket
 
 More APIs can be added easily to `s3.py` by referencing the REST API syntax 
 [documented here](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html).
@@ -35,5 +36,3 @@ export AWS_S3_BUCKET=[your bucket name]
 ```
 2. Clone this repo or download s3.py file, and copy to your Linux machine
 3. Run the program as `python s3.py` or `python2.7 s3.py` 
-
-

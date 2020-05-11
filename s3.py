@@ -14,7 +14,8 @@ urllib2.install_opener(opener)
 
 REGION = 'us-east-1'
 SERVICE = 's3'
-SCHEME = 'http'
+SCHEME = 'https'
+S3_ENDPOINT = 's3.us-east-1.amazonaws.com'
 
 def sign(key, msg):
     return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
@@ -65,7 +66,7 @@ def build_request(method='GET', host='s3.amazonaws.com', uri_path='/', query_str
   # add our new authorization header
   headers['authorization'] = authorization_header
 
-  request_url = urlparse.urlunparse((SCHEME, host, uri_path, None, query_string, None))
+  request_url = urlparse.urlunparse((SCHEME, S3_ENDPOINT, uri_path, None, query_string, None))
   return (request_url, headers)
 
 def submit_request(method, url, headers, body=None):
@@ -93,13 +94,14 @@ if access_key is None or secret_key is None or s3_bucket is None:
     print('One or more required environment variables not set (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET)')
     sys.exit()
 
-s3_endpoint = 's3.us-east-1.amazonaws.com'
-bucket_host = s3_bucket + '.' + s3_endpoint
+s3_host = S3_ENDPOINT
+bucket_host = s3_bucket + '.' + S3_ENDPOINT
+new_bucket_host = s3_bucket + '-newbucket2020' + '.' + S3_ENDPOINT
 object_uri = '/test.txt'
 
 # PutObject API call 
 print('----- PutObject -----')
-data = 'Welcome to amazing S3!'
+data = 'Amazon S3 is so cool!'
 (u, h) = build_request(method='PUT', host=bucket_host, uri_path=object_uri, body=data, 
                       headers={'x-amz-storage-class': 'REDUCED_REDUNDANCY'})
 print('**Request URL = ' + u)
@@ -108,6 +110,7 @@ print('**Request Headers = ' + str(h))
 res = submit_request('PUT', u, h, data)
 print('**Response Code: ' + str(res.getcode()))
 print('**Response Data: ' + res.read())
+print('----- PutObject -----\n\n')
 
 # GetObject API call 
 print('----- GetObject -----')
@@ -118,6 +121,7 @@ print('**Request Headers = ' + str(h))
 res = submit_request('GET', u, h)
 print('**Response Code: ' + str(res.getcode()))
 print('**Response Data: ' + res.read())
+print('----- GetObject -----\n\n')
 
 # ListObjects (ListBucket) API call 
 print('----- ListObjects -----')
@@ -128,20 +132,21 @@ print('**Request Headers = ' + str(h))
 res = submit_request('GET', u, h)
 print('**Response Code: ' + str(res.getcode()))
 print('**Response Data: ' + prettyXml(res.read()))
+print('----- ListObjects -----\n\n')
 
 # ListBuckets (ListAllMyBuckets) API call 
 print('----- ListBuckets -----')
-(u, h) = build_request(method='GET', host=s3_endpoint, uri_path='/', headers={})
+(u, h) = build_request(method='GET', host=s3_host, uri_path='/', headers={})
 print('**Request URL = ' + u)
 print('**Request Headers = ' + str(h))
 
 res = submit_request('GET', u, h)
 print('**Response Code: ' + str(res.getcode()))
 print('**Response Data: ' + prettyXml(res.read()))
+print('----- ListBuckets -----\n\n')
 
 # CreateBucket API call 
 print('----- CreateBucket -----')
-new_bucket_host = 'bestbucketnameintheworld2020' + '.' + s3_endpoint
 (u, h) = build_request(method='PUT', host=new_bucket_host, uri_path='/', headers={})
 print('**Request URL = ' + u)
 print('**Request Headers = ' + str(h))
@@ -149,3 +154,15 @@ print('**Request Headers = ' + str(h))
 res = submit_request('PUT', u, h)
 print('**Response Code: ' + str(res.getcode()))
 print('**Response Data: ' + res.read())
+print('----- CreateBucket -----\n\n')
+
+# DeleteBucket API call 
+print('----- DeleteBucket -----')
+(u, h) = build_request(method='DELETE', host=new_bucket_host, uri_path='/', headers={})
+print('**Request URL = ' + u)
+print('**Request Headers = ' + str(h))
+
+res = submit_request('DELETE', u, h)
+print('**Response Code: ' + str(res.getcode()))
+print('**Response Data: ' + res.read())
+print('----- DeleteBucket -----\n\n')
