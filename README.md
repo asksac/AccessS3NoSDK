@@ -25,8 +25,8 @@ More APIs can be added easily to `s3.py` by referencing the REST API syntax
 
 ### Installation 
 
-> **Note**: `s3.py` is written for Python 2.7, as it uses urllib2. If you have Python 3 
-installed, you must run the program using the older runtime. 
+> **Note**: `s3.py` has been tested with Python 2.7 and Python 3.7. Please report any issues running the 
+code. 
 
 1. Configure required environment variables 
 ```bash
@@ -36,3 +36,10 @@ export AWS_S3_BUCKET=[your bucket name]
 ```
 2. Clone this repo or download s3.py file, and copy to your Linux machine
 3. Run the program as `python s3.py` or `python2.7 s3.py` 
+
+### License
+
+[![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
+
+- **[MIT license](http://opensource.org/licenses/mit-license.php)**
+- Copyright 2020 &copy; Sachin Hamirwasia
