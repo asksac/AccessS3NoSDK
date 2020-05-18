@@ -114,25 +114,24 @@ def prettyXml(txt):
 
 # -----
 
-s3_service = dict(
+sts_service = dict(
   region = 'us-east-1', 
-  name = 's3', 
+  name = 'sts', 
   scheme = 'https',
-  endpoint = 's3.us-east-1.amazonaws.com'
+  endpoint = 'sts.us-east-1.amazonaws.com'
 )
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 access_key = os.environ.get('AWS_ACCESS_KEY_ID')
 secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-s3_bucket = os.environ.get('AWS_S3_BUCKET')
 
-if access_key is None or secret_key is None or s3_bucket is None:
-    print('One or more required environment variables not set (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET)')
+if access_key is None or secret_key is None:
+    print('One or more required environment variables not set (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)')
     sys.exit()
 
 # sets logging level for urllib
-if s3_service.get('scheme') == 'https': 
+if sts_service.get('scheme') == 'https': 
   https_logger = urllibx.HTTPSHandler(debuglevel = 1)
   opener = urllibx.build_opener(https_logger) # put your other handlers here too!
   urllibx.install_opener(opener)
@@ -141,57 +140,25 @@ else:
   opener = urllibx.build_opener(http_logger) # put your other handlers here too!
   urllibx.install_opener(opener)
 
-bucket_host = s3_bucket + '.' + s3_service.get('endpoint')
-new_bucket_host = s3_bucket + '-newbucket2020' + '.' + s3_service.get('endpoint')
-
-# PutObject API call 
-print('----- PutObject -----')
-object_uri = '/test.txt'
-data = 'Amazon S3 is so cool!'
-(u, h) = build_request(service=s3_service, method='PUT', host=bucket_host, uri_path=object_uri, body=data, 
-                      headers={'x-amz-storage-class': 'REDUCED_REDUNDANCY'})
-res = submit_request('PUT', u, h, data)
-print('----- PutObject -----\n\n')
-
 # GetObject API call 
-print('----- GetObject -----')
-object_uri = '/test.txt'
-(u, h) = build_request(service=s3_service, method='GET', host=bucket_host, uri_path=object_uri, headers={})
-res = submit_request('GET', u, h)
-print('----- GetObject -----\n\n')
-
-# ListObjects (ListBucket) API call 
-print('----- ListObjects -----')
-(u, h) = build_request(service=s3_service, method='GET', host=bucket_host, uri_path='/', query_params={'MaxKeys': '10'}, headers={})
-res = submit_request('GET', u, h)
-print('----- ListObjects -----\n\n')
-
-# ListBuckets (ListAllMyBuckets) API call 
-print('----- ListBuckets -----')
-(u, h) = build_request(service=s3_service, method='GET', host=s3_service.get('endpoint'), uri_path='/', headers={})
-res = submit_request('GET', u, h)
-print('----- ListBuckets -----\n\n')
-
-# CreateBucket API call 
-print('----- CreateBucket -----')
-s3_service = dict(
-  region = 'us-west-1', 
-  name = 's3', 
-  scheme = 'https',
-  endpoint = 's3.us-west-1.amazonaws.com'
+print('----- GetSessionToken -----')
+gst = dict(
+  Version = '2011-06-15',
+  Action = 'GetSessionToken', 
+  DurationSeconds = '129600' 
 )
-new_bucket_host = s3_bucket + '-newbucket2020' + '.' + s3_service.get('endpoint')
-loc = '''<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-   <LocationConstraint>us-west-1</LocationConstraint>
-</CreateBucketConfiguration>
-'''
-ct = {'content-type': 'text/plain'}
-(u, h) = build_request(service=s3_service, method='PUT', host=new_bucket_host, uri_path='/', body=loc, headers=ct)
-res = submit_request('PUT', u, h, loc)
-print('----- CreateBucket -----\n\n')
+(u, h) = build_request(service=sts_service, method='GET', query_params=gst)
+(code, res) = submit_request('GET', u, h)
 
-# DeleteBucket API call 
-print('----- DeleteBucket -----')
-(u, h) = build_request(service=s3_service, method='DELETE', host=new_bucket_host, uri_path='/', headers={})
-res = submit_request('DELETE', u, h)
-print('----- DeleteBucket -----\n\n')
+if (code == 200):
+  dom = xml.dom.minidom.parseString(res)
+  accesskeyid = dom.getElementsByTagName('AccessKeyId')[0].firstChild.nodeValue
+  secretaccesskey = dom.getElementsByTagName('SecretAccessKey')[0].firstChild.nodeValue
+  print('Access Key ID:' + accesskeyid)
+  print('Secret Access Key:' + secretaccesskey)
+  #ec = subprocess.call(['ls', '-al'])
+  ec = subprocess.call(['tpconfig', '-update', '-storage_server', '<SERVER NAME>', '-stype', '<SERVER TYPE>', '-sts_user_id', accesskeyid, '-password', secretaccesskey])
+  print('tpconfig returned code: ' + str(ec))
+
+print('----- GetSessionToken -----\n\n')
+
